@@ -21,6 +21,10 @@ MOUNT_DIR="$WORK_DIR/mount"
 RW_DMG="$WORK_DIR/$VOLUME_NAME-rw.dmg"
 DEVICE=""
 
+log() {
+  echo "==> $*"
+}
+
 cleanup() {
   if [ -n "$DEVICE" ]; then
     hdiutil detach "$DEVICE" -quiet || true
@@ -34,21 +38,30 @@ mkdir -p "$MOUNT_DIR"
 APP_SIZE_MB="$(du -sm "$APP_PATH" | awk '{print $1}')"
 DMG_SIZE_MB="$((APP_SIZE_MB + 200))"
 
+log "Creating writable DMG image (${DMG_SIZE_MB} MB)"
 hdiutil create "$RW_DMG" \
   -volname "$VOLUME_NAME" \
   -size "${DMG_SIZE_MB}m" \
   -fs HFS+ \
-  -format UDRW \
-  -quiet
+  -format UDRW
 
-DEVICE="$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen -mountpoint "$MOUNT_DIR" | awk '/Apple_HFS/ {print $1; exit}')"
+log "Mounting writable DMG"
+ATTACH_OUTPUT="$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen -mountpoint "$MOUNT_DIR")"
+echo "$ATTACH_OUTPUT"
+DEVICE="$(echo "$ATTACH_OUTPUT" | awk '/Apple_HFS/ {print $1; exit}')"
+if [ -z "$DEVICE" ]; then
+  echo "Could not determine mounted DMG device." >&2
+  exit 1
+fi
 
+log "Copying app bundle and installer assets"
 cp -R "$APP_PATH" "$MOUNT_DIR/"
 ln -s /Applications "$MOUNT_DIR/Applications"
 mkdir -p "$MOUNT_DIR/.background"
 cp "$BACKGROUND_IMAGE" "$MOUNT_DIR/.background/background.jpg"
 
-osascript <<APPLESCRIPT
+log "Configuring Finder window layout"
+if ! osascript <<APPLESCRIPT
 tell application "Finder"
   tell disk "$VOLUME_NAME"
     open
@@ -68,16 +81,20 @@ tell application "Finder"
   end tell
 end tell
 APPLESCRIPT
+then
+  echo "Warning: Finder layout customization failed. The DMG will still include the app and Applications shortcut." >&2
+fi
 
+log "Detaching writable DMG"
 hdiutil detach "$DEVICE" -quiet
 DEVICE=""
 
+log "Converting writable DMG to compressed image"
 mkdir -p "$(dirname "$DMG_PATH")"
 hdiutil convert "$RW_DMG" \
   -format UDZO \
   -imagekey zlib-level=9 \
   -o "$DMG_PATH" \
-  -ov \
-  -quiet
+  -ov
 
 echo "Created DMG: $DMG_PATH"

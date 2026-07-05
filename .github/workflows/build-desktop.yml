@@ -108,7 +108,8 @@ jobs:
 
       - name: Package dmg
         run: |
-          perl -pi -e 's/\r$//' scripts/create_macos_dmg.sh
+          python -c "from pathlib import Path; path = Path('scripts/create_macos_dmg.sh'); path.write_bytes(path.read_bytes().replace(b'\r\n', b'\n'))"
+          bash -n scripts/create_macos_dmg.sh
           bash scripts/create_macos_dmg.sh "dist/StreamCap.app" "dist/StreamCap-macos.dmg"
 
       - name: Upload artifact
