@@ -87,6 +87,7 @@ def bundled_node_source(target_platform: str) -> Path:
 
 
 def pyinstaller_command(args: argparse.Namespace, target_platform: str) -> list[str]:
+    contents_directory = "_internal" if target_platform == "windows" else "."
     command = [
         sys.executable,
         "-m",
@@ -94,7 +95,7 @@ def pyinstaller_command(args: argparse.Namespace, target_platform: str) -> list[
         "--onedir",
         "-w",
         "--contents-directory",
-        ".",
+        contents_directory,
         "--add-data",
         add_data_arg(str(ROOT / "config"), "config", target_platform),
         "--add-data",

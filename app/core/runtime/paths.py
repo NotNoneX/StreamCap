@@ -33,7 +33,8 @@ if _CONTENTS_DIR is not None:
     resource_dir = _CONTENTS_DIR / "Resources"
     user_data_dir = Path.home() / "Library" / "Application Support" / APP_NAME
 elif getattr(sys, "frozen", False) and sys.platform == "win32":
-    resource_dir = _EXECUTABLE_DIR
+    internal_dir = _EXECUTABLE_DIR / "_internal"
+    resource_dir = internal_dir if internal_dir.is_dir() else _EXECUTABLE_DIR
     user_data_dir = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / APP_NAME
 else:
     resource_dir = _EXECUTABLE_DIR
