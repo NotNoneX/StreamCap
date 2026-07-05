@@ -5,6 +5,17 @@ APP_PATH="${1:-dist/StreamCap.app}"
 DMG_PATH="${2:-dist/StreamCap-macos.dmg}"
 VOLUME_NAME="${3:-StreamCap}"
 BACKGROUND_IMAGE="${4:-assets/images/dmg.jpg}"
+WINDOW_WIDTH=830
+WINDOW_HEIGHT=480
+WINDOW_LEFT=100
+WINDOW_TOP=100
+WINDOW_RIGHT=$((WINDOW_LEFT + WINDOW_WIDTH))
+WINDOW_BOTTOM=$((WINDOW_TOP + WINDOW_HEIGHT))
+APP_ICON_X=230
+APP_ICON_Y=250
+APPLICATIONS_ICON_X=600
+APPLICATIONS_ICON_Y=250
+ICON_SIZE=96
 
 if [ ! -d "$APP_PATH" ]; then
   echo "App bundle not found: $APP_PATH" >&2
@@ -58,30 +69,34 @@ cp -R "$APP_PATH" "$MOUNT_DIR/"
 ln -s /Applications "$MOUNT_DIR/Applications"
 mkdir -p "$MOUNT_DIR/.background"
 cp "$BACKGROUND_IMAGE" "$MOUNT_DIR/.background/background.jpg"
+chmod -Rf u+rw "$MOUNT_DIR/$(basename "$APP_PATH")" "$MOUNT_DIR/.background"
 
 log "Configuring Finder window layout"
-if ! osascript <<APPLESCRIPT
+osascript <<APPLESCRIPT
 tell application "Finder"
   tell disk "$VOLUME_NAME"
     open
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
-    set the bounds of container window to {100, 100, 930, 580}
+    set the bounds of container window to {$WINDOW_LEFT, $WINDOW_TOP, $WINDOW_RIGHT, $WINDOW_BOTTOM}
     set viewOptions to the icon view options of container window
     set arrangement of viewOptions to not arranged
-    set icon size of viewOptions to 96
-    set background picture of viewOptions to file ".background:background.jpg"
-    set position of item "StreamCap.app" of container window to {200, 250}
-    set position of item "Applications" of container window to {630, 250}
+    set icon size of viewOptions to $ICON_SIZE
+    set background picture of viewOptions to file "background.jpg" of folder ".background"
+    set position of item "StreamCap.app" of container window to {$APP_ICON_X, $APP_ICON_Y}
+    set position of item "Applications" of container window to {$APPLICATIONS_ICON_X, $APPLICATIONS_ICON_Y}
     update without registering applications
-    delay 2
+    delay 3
     close
   end tell
 end tell
 APPLESCRIPT
-then
-  echo "Warning: Finder layout customization failed. The DMG will still include the app and Applications shortcut." >&2
+
+sync
+if [ ! -f "$MOUNT_DIR/.DS_Store" ]; then
+  echo "Finder layout was not saved: .DS_Store was not created." >&2
+  exit 1
 fi
 
 log "Detaching writable DMG"
