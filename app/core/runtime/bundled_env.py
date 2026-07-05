@@ -60,6 +60,15 @@ def patch_macos_flet_launcher() -> None:
                 return True
         return False
 
+    def write_file_picker_entitlements(target_dir: Path) -> Path:
+        entitlements_path = target_dir / "StreamCapFlet.entitlements"
+        entitlements = {
+            "com.apple.security.files.user-selected.read-write": True,
+        }
+        with entitlements_path.open("wb") as file:
+            plistlib.dump(entitlements, file)
+        return entitlements_path
+
     def prepare_streamcap_flet_app() -> Path:
         target_app_name = "StreamCap Flet.app"
         target_app = Path(user_data_dir) / "flet_client" / flet_desktop.version.version / target_app_name
@@ -90,7 +99,20 @@ def patch_macos_flet_launcher() -> None:
 
         codesign = shutil.which("codesign")
         if codesign:
-            subprocess.run([codesign, "--force", "--deep", "--sign", "-", str(target_app)], check=False)
+            entitlements_path = write_file_picker_entitlements(target_app.parent)
+            subprocess.run(
+                [
+                    codesign,
+                    "--force",
+                    "--deep",
+                    "--sign",
+                    "-",
+                    "--entitlements",
+                    str(entitlements_path),
+                    str(target_app),
+                ],
+                check=False,
+            )
 
         return target_app
 

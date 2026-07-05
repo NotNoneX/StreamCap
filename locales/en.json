@@ -199,6 +199,7 @@
     "security_settings": "Security Settings",
     "select": "select",
     "unsupported_select_path": "Path selection is not supported on the web 📂 Please enter manually",
+    "select_path_failed": "The path picker could not be opened. Please enter the save path manually.",
     "program_config": "Basic configuration of the program",
     "restore_defaults": "Restore Default Settings",
     "program_language": "Program Language",

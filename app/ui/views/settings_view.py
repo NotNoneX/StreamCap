@@ -1238,7 +1238,16 @@ class SettingsPage(PageBase):
                 await self.app.snack_bar.show_snack_bar(self._["unsupported_select_path"])
                 return
             folder_picker = ft.FilePicker()
-            path = await folder_picker.get_directory_path()
+            try:
+                path = await folder_picker.get_directory_path()
+            except RuntimeError as exc:
+                logger.error(f"Failed to open folder picker: {exc}")
+                await self.app.snack_bar.show_snack_bar(
+                    self._["select_path_failed"],
+                    bgcolor=ft.Colors.RED,
+                    duration=3000,
+                )
+                return
             if path:
                 control.value = path
                 control.update()

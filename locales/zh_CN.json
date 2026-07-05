@@ -199,6 +199,7 @@
     "security_settings": "安全设置",
     "select": "选择",
     "unsupported_select_path": "Web端不支持选择路径📂请手动输入",
+    "select_path_failed": "路径选择器无法打开，请手动输入保存路径",
     "program_config": "程序的基本设置",
     "restore_defaults": "恢复默认设置",
     "program_language": "程序语言",
