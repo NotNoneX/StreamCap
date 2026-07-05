@@ -104,7 +104,7 @@ jobs:
           python scripts/build.py --platform macos $REFRESH_ARG
 
       - name: Package dmg
-        run: hdiutil create -volname "StreamCap" -srcfolder "dist/StreamCap.app" -ov -format UDZO "dist/StreamCap-macos.dmg"
+        run: bash scripts/create_macos_dmg.sh "dist/StreamCap.app" "dist/StreamCap-macos.dmg"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
