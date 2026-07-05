@@ -28,7 +28,7 @@ if [ ! -f "$BACKGROUND_IMAGE" ]; then
 fi
 
 WORK_DIR="$(mktemp -d)"
-MOUNT_DIR="$WORK_DIR/mount"
+MOUNT_DIR=""
 RW_DMG="$WORK_DIR/$VOLUME_NAME-rw.dmg"
 DEVICE=""
 
@@ -44,8 +44,6 @@ cleanup() {
 }
 trap cleanup EXIT
 
-mkdir -p "$MOUNT_DIR"
-
 APP_SIZE_MB="$(du -sm "$APP_PATH" | awk '{print $1}')"
 DMG_SIZE_MB="$((APP_SIZE_MB + 200))"
 
@@ -56,11 +54,16 @@ hdiutil create "$RW_DMG" \
   -fs HFS+
 
 log "Mounting writable DMG"
-ATTACH_OUTPUT="$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen -mountpoint "$MOUNT_DIR")"
+ATTACH_OUTPUT="$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen)"
 echo "$ATTACH_OUTPUT"
 DEVICE="$(echo "$ATTACH_OUTPUT" | awk '/Apple_HFS/ {print $1; exit}')"
 if [ -z "$DEVICE" ]; then
   echo "Could not determine mounted DMG device." >&2
+  exit 1
+fi
+MOUNT_DIR="$(echo "$ATTACH_OUTPUT" | awk '/Apple_HFS/ {print $3; exit}')"
+if [ -z "$MOUNT_DIR" ] || [ ! -d "$MOUNT_DIR" ]; then
+  echo "Could not determine mounted DMG path." >&2
   exit 1
 fi
 
