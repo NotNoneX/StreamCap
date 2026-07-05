@@ -6,7 +6,7 @@ DMG_PATH="${2:-dist/StreamCap-macos.dmg}"
 VOLUME_NAME="${3:-StreamCap}"
 BACKGROUND_IMAGE="${4:-assets/images/dmg.jpg}"
 WINDOW_WIDTH=830
-WINDOW_HEIGHT=480
+WINDOW_HEIGHT=540
 WINDOW_LEFT=100
 WINDOW_TOP=100
 WINDOW_RIGHT=$((WINDOW_LEFT + WINDOW_WIDTH))
@@ -84,6 +84,7 @@ tell application "Finder"
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
+    set pathbar visible of container window to false
     set the bounds of container window to {$WINDOW_LEFT, $WINDOW_TOP, $WINDOW_RIGHT, $WINDOW_BOTTOM}
     set viewOptions to the icon view options of container window
     set arrangement of viewOptions to not arranged
