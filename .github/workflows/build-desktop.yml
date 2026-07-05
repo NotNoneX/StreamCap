@@ -107,7 +107,9 @@ jobs:
           python scripts/build.py --platform macos $REFRESH_ARG
 
       - name: Package dmg
-        run: bash scripts/create_macos_dmg.sh "dist/StreamCap.app" "dist/StreamCap-macos.dmg"
+        run: |
+          perl -pi -e 's/\r$//' scripts/create_macos_dmg.sh
+          bash scripts/create_macos_dmg.sh "dist/StreamCap.app" "dist/StreamCap-macos.dmg"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
