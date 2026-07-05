@@ -76,6 +76,8 @@ chmod -Rf u+rw "$MOUNT_DIR/$(basename "$APP_PATH")" "$MOUNT_DIR/.background"
 
 log "Configuring Finder window layout"
 osascript <<APPLESCRIPT
+set backgroundImage to POSIX file "$MOUNT_DIR/.background/background.jpg" as alias
+
 tell application "Finder"
   tell disk "$VOLUME_NAME"
     open
@@ -86,7 +88,7 @@ tell application "Finder"
     set viewOptions to the icon view options of container window
     set arrangement of viewOptions to not arranged
     set icon size of viewOptions to $ICON_SIZE
-    set background picture of viewOptions to file "background.jpg" of folder ".background"
+    set background picture of viewOptions to backgroundImage
     set position of item "StreamCap.app" of container window to {$APP_ICON_X, $APP_ICON_Y}
     set position of item "Applications" of container window to {$APPLICATIONS_ICON_X, $APPLICATIONS_ICON_Y}
     update without registering applications
