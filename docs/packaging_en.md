@@ -41,8 +41,18 @@ open dist/StreamCap.app
 Windows output:
 
 ```text
-dist/StreamCap/StreamCap.exe
+dist/StreamCap/
+├─ StreamCap.exe
+└─ _internal/
+   ├─ assets/
+   ├─ config/
+   ├─ locales/
+   └─ ...
 ```
+
+Windows uses the PyInstaller one-dir layout: `StreamCap.exe` stays at the top level as the user entry point, while runtime dependencies, resources, and DLLs live under `_internal`.
+
+GitHub Actions automatically zips downloaded artifacts, so the workflow uploads the app directory under `dist` instead of creating an inner zip first. After downloading `StreamCap-windows.zip`, extracting it once gives a `StreamCap` folder.
 
 ## macOS Architecture
 
@@ -180,6 +190,8 @@ Locations:
 macOS:   ~/Library/Application Support/StreamCap
 Windows: %APPDATA%\StreamCap
 ```
+
+On Windows, the default recording directory is `downloads` next to `StreamCap.exe`, so large videos are not written to the C drive user data directory by default. If the user chooses a save directory in Settings, that value takes precedence.
 
 When running from source, StreamCap still uses the project directory for easier development and debugging.
 

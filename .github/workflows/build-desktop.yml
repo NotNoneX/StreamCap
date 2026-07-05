@@ -60,14 +60,11 @@ jobs:
           }
           python scripts/build.py @buildArgs
 
-      - name: Package zip
-        run: Compress-Archive -Path dist/StreamCap/* -DestinationPath dist/StreamCap-windows.zip -Force
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: StreamCap-windows
-          path: dist/StreamCap-windows.zip
+          path: dist/*
           if-no-files-found: error
 
   build-macos:

@@ -8,6 +8,7 @@ from ...models.media.video_format_model import VideoFormat
 from ...models.media.video_quality_model import VideoQuality
 from ...utils.delay import DelayedTaskExecutor
 from ...utils.logger import logger
+from ...core.runtime.paths import default_recordings_dir
 from ..base_page import PageBase
 from ..components.dialogs.help_dialog import HelpDialog
 
@@ -223,7 +224,7 @@ class SettingsPage(PageBase):
     def get_video_save_path(self):
         live_save_path = self.get_config_value("live_save_path")
         if not live_save_path:
-            live_save_path = os.path.join(self.app.run_path, "downloads")
+            live_save_path = str(default_recordings_dir)
         return live_save_path
 
     @staticmethod

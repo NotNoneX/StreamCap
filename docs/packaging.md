@@ -41,8 +41,18 @@ open dist/StreamCap.app
 Windows 打包完成后产物为：
 
 ```text
-dist/StreamCap/StreamCap.exe
+dist/StreamCap/
+├─ StreamCap.exe
+└─ _internal/
+   ├─ assets/
+   ├─ config/
+   ├─ locales/
+   └─ ...
 ```
+
+Windows 使用 PyInstaller one-dir 结构：外层保留 `StreamCap.exe` 作为用户入口，运行依赖、资源文件和 DLL 放在 `_internal` 目录中。
+
+GitHub Actions 会自动把上传的 artifact 打成 zip，因此工作流直接上传 `dist` 下的应用目录，不再预先生成内层 zip。下载 `StreamCap-windows.zip` 后解压一次即可得到 `StreamCap` 文件夹。
 
 ## macOS 架构
 
@@ -180,6 +190,8 @@ open dist/StreamCap.app
 macOS:   ~/Library/Application Support/StreamCap
 Windows: %APPDATA%\StreamCap
 ```
+
+Windows 默认录制保存目录为 `StreamCap.exe` 同级目录下的 `downloads`，避免大文件写入 C 盘用户数据目录。用户在设置页手动选择保存目录后，以用户设置为准。
 
 源码运行时仍使用项目目录，方便开发调试。
 

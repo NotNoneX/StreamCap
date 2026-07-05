@@ -40,6 +40,11 @@ else:
     resource_dir = _EXECUTABLE_DIR
     user_data_dir = _EXECUTABLE_DIR
 
+if getattr(sys, "frozen", False) and sys.platform == "win32":
+    default_recordings_dir = _EXECUTABLE_DIR / "downloads"
+else:
+    default_recordings_dir = user_data_dir / "downloads"
+
 
 def prepare_user_data_dir() -> None:
     """Copy bundled defaults to the writable user data directory when needed."""
