@@ -42,8 +42,7 @@ log "Creating writable DMG image (${DMG_SIZE_MB} MB)"
 hdiutil create "$RW_DMG" \
   -volname "$VOLUME_NAME" \
   -size "${DMG_SIZE_MB}m" \
-  -fs HFS+ \
-  -format UDRW
+  -fs HFS+
 
 log "Mounting writable DMG"
 ATTACH_OUTPUT="$(hdiutil attach "$RW_DMG" -readwrite -noverify -noautoopen -mountpoint "$MOUNT_DIR")"
