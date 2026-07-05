@@ -54,8 +54,11 @@ jobs:
 
       - name: Build app
         run: |
-          $refreshArg = if ("${{ inputs.refresh_flet }}" -eq "true") { "--refresh-flet" } else { "" }
-          python scripts/build.py --platform windows $refreshArg
+          $buildArgs = @("--platform", "windows")
+          if ("${{ inputs.refresh_flet }}" -eq "true") {
+            $buildArgs += "--refresh-flet"
+          }
+          python scripts/build.py @buildArgs
 
       - name: Package zip
         run: Compress-Archive -Path dist/StreamCap/* -DestinationPath dist/StreamCap-windows.zip -Force
