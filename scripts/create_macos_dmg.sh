@@ -7,10 +7,6 @@ VOLUME_NAME="${3:-StreamCap}"
 BACKGROUND_IMAGE="${4:-assets/images/dmg.jpg}"
 WINDOW_WIDTH=830
 WINDOW_HEIGHT=540
-WINDOW_LEFT=100
-WINDOW_TOP=100
-WINDOW_RIGHT=$((WINDOW_LEFT + WINDOW_WIDTH))
-WINDOW_BOTTOM=$((WINDOW_TOP + WINDOW_HEIGHT))
 APP_ICON_X=230
 APP_ICON_Y=250
 APPLICATIONS_ICON_X=600
@@ -79,13 +75,25 @@ osascript <<APPLESCRIPT
 set backgroundImage to POSIX file "$MOUNT_DIR/.background/background.jpg" as alias
 
 tell application "Finder"
+  set desktopBounds to bounds of window of desktop
+  set desktopLeft to item 1 of desktopBounds
+  set desktopTop to item 2 of desktopBounds
+  set desktopWidth to (item 3 of desktopBounds) - desktopLeft
+  set desktopHeight to (item 4 of desktopBounds) - desktopTop
+  set windowLeft to desktopLeft + (round (($WINDOW_WIDTH - desktopWidth) / -2) rounding down)
+  set windowTop to desktopTop + (round (($WINDOW_HEIGHT - desktopHeight) / -2) rounding down)
+  if windowLeft < desktopLeft then set windowLeft to desktopLeft
+  if windowTop < desktopTop then set windowTop to desktopTop
+  set windowRight to windowLeft + $WINDOW_WIDTH
+  set windowBottom to windowTop + $WINDOW_HEIGHT
+
   tell disk "$VOLUME_NAME"
     open
     set current view of container window to icon view
     set toolbar visible of container window to false
     set statusbar visible of container window to false
     set pathbar visible of container window to false
-    set the bounds of container window to {$WINDOW_LEFT, $WINDOW_TOP, $WINDOW_RIGHT, $WINDOW_BOTTOM}
+    set the bounds of container window to {windowLeft, windowTop, windowRight, windowBottom}
     set viewOptions to the icon view options of container window
     set arrangement of viewOptions to not arranged
     set icon size of viewOptions to $ICON_SIZE
