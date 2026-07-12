@@ -10,6 +10,7 @@ from ...utils.delay import DelayedTaskExecutor
 from ...utils.logger import logger
 from ..base_page import PageBase
 from ..components.dialogs.help_dialog import HelpDialog
+from ..themes import PopupColorItem
 
 
 class SettingsPage(PageBase):
@@ -41,7 +42,7 @@ class SettingsPage(PageBase):
     async def load(self):
         self.content_area.controls.clear()
         language = self.app.language_manager.language
-        self._ = language["settings_page"] | language["video_quality"] | language["base"]
+        self._ = language["settings_page"] | language["video_quality"] | language["base"] | language["sidebar"]
         self.tab_recording = self.create_recording_settings_tab()
         self.tab_push = self.create_push_settings_tab()
         self.tab_cookies = self.create_cookies_settings_tab()
@@ -262,6 +263,33 @@ class SettingsPage(PageBase):
                                 on_select=self.on_change,
                                 data="language",
                                 tooltip=self._["switch_language"],
+                            ),
+                        ),
+                        self.create_setting_row(
+                            self._["theme_color"],
+                            ft.PopupMenuButton(
+                                icon=ft.Icons.COLOR_LENS_OUTLINED,
+                                icon_color=ft.Colors.PRIMARY,
+                                tooltip=self._["colors"],
+                                items=[
+                                    PopupColorItem(color=color, name=name)
+                                    for color, name in [
+                                        ("deeppurple", "Deep purple"),
+                                        ("purple", "Purple"),
+                                        ("indigo", "Indigo"),
+                                        ("blue", "Blue"),
+                                        ("teal", "Teal"),
+                                        ("deeporange", "Deep orange"),
+                                        ("orange", "Orange"),
+                                        ("pink", "Pink"),
+                                        ("brown", "Brown"),
+                                        ("bluegrey", "Blue Grey"),
+                                        ("green", "Green"),
+                                        ("cyan", "Cyan"),
+                                        ("lightblue", "Light Blue"),
+                                        ("", "Default"),
+                                    ]
+                                ],
                             ),
                         ),
                         self.create_setting_row(

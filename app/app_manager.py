@@ -170,6 +170,9 @@ class App:
             if page := self.pages.get(page_name):
                 await self.settings.is_changed()
                 self.current_page = page
+                rail = getattr(self.left_navigation_menu, "rail", None)
+                if rail is not None:
+                    rail.select_page(page_name)
                 await page.load()
         finally:
             self._loading_page = False
