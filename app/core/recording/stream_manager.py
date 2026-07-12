@@ -346,6 +346,22 @@ class LiveStreamRecorder:
             else:
                 self.recording.status_info = RecordingStatus.RECORDING_ERROR
 
+    @staticmethod
+    async def _capture_stream_tail(
+        stream: asyncio.StreamReader | None,
+        max_bytes: int = 64 * 1024,
+    ) -> bytes:
+        """Continuously drain a subprocess stream while retaining a bounded tail."""
+        if stream is None or max_bytes <= 0:
+            return b""
+
+        tail = bytearray()
+        while chunk := await stream.read(4096):
+            tail.extend(chunk)
+            if len(tail) > max_bytes:
+                del tail[:-max_bytes]
+        return bytes(tail)
+
     async def start_ffmpeg(
         self,
         record_name: str,
@@ -361,6 +377,8 @@ class LiveStreamRecorder:
 
         logger.info(f"Starting ffmpeg recording - recorder id: {id(self)}, rec_id: {self.recording.rec_id}")
         self.should_stop = False
+        process = None
+        stderr_task = None
 
         try:
             save_file_path = ffmpeg_command[-1]
@@ -368,10 +386,11 @@ class LiveStreamRecorder:
             process = await asyncio.create_subprocess_exec(
                 *ffmpeg_command,
                 stdin=asyncio.subprocess.PIPE,
-                stdout=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.DEVNULL,
                 stderr=asyncio.subprocess.PIPE,
                 startupinfo=self.subprocess_start_info,
             )
+            stderr_task = asyncio.create_task(self._capture_stream_tail(process.stderr))
 
             self.services.process_manager.add_process(process)
             self.recording.status_info = RecordingStatus.RECORDING
@@ -418,16 +437,19 @@ class LiveStreamRecorder:
 
                 await asyncio.sleep(1)
 
+            await process.wait()
+            stderr = await stderr_task
             return_code = process.returncode
-            safe_return_code = [0, 255]
-            stdout, stderr = await process.communicate()
+            safe_return_codes = {0, 255}
 
-            if return_code not in safe_return_code and stderr:
+            if return_code not in safe_return_codes:
+                error_output = stderr.decode(errors="replace").strip()
+                if error_output:
+                    logger.error(f"FFmpeg Stderr Output: {error_output.splitlines()[-1]}")
                 if not self.recording.is_recording:
-                    logger.error(f"FFmpeg Stderr Output: {str(stderr.decode()).splitlines()[0]}")
                     self._handle_recording_error(record_name, self._["record_stream_error"])
 
-            if return_code in safe_return_code:
+            if return_code in safe_return_codes:
                 if not self.recording.is_recording:
                     await self._handle_recording_finished(record_name)
 
@@ -488,6 +510,14 @@ class LiveStreamRecorder:
             self._handle_recording_error(record_name, self._["no_ffmpeg_tip"], duration=4000)
             return False
         finally:
+            if process is not None and process.returncode is None:
+                try:
+                    process.kill()
+                    await process.wait()
+                except ProcessLookupError:
+                    pass
+            if stderr_task is not None:
+                await asyncio.gather(stderr_task, return_exceptions=True)
             self.recording.record_url = None
 
         return True
