@@ -21,41 +21,54 @@ from app.utils.logger import logger
 
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 6006
-WINDOW_SCALE = 0.65
+MACOS_WINDOW_SCALE = 0.56
+WINDOWS_WINDOW_SCALE = 0.68
 MIN_WIDTH = 950
+MIN_HEIGHT = 620
 ASSETS_DIR = "assets"
 
 
-async def setup_window(page: ft.Page, app: App) -> None:
+def get_desktop_window_scale(page: ft.Page) -> float:
+    is_macos = page.platform is not None and page.platform.value == "macos"
+    return MACOS_WINDOW_SCALE if is_macos else WINDOWS_WINDOW_SCALE
+
+
+async def setup_desktop_window(page: ft.Page, app: App) -> None:
+    if page.web:
+        return
+
     page.window.icon = os.path.join(resource_dir, ASSETS_DIR, "icon.ico")
     page.window.skip_task_bar = False
     page.window.always_on_top = False
     page.focused = True
 
-    if not page.web:
-        try:
-            if app.settings.user_config.get("remember_window_size"):
-                window_width = app.settings.user_config.get("window_width")
-                window_height = app.settings.user_config.get("window_height")
-                if window_width and window_height:
-                    page.window.width = int(window_width)
-                    page.window.height = int(window_height)
-                else:
-                    screen = get_monitors()[0]
-                    page.window.width = int(screen.width * WINDOW_SCALE)
-                    page.window.height = int(screen.height * WINDOW_SCALE)
+    try:
+        window_scale = get_desktop_window_scale(page)
+        page.window.min_width = MIN_WIDTH
+        page.window.min_height = max(MIN_HEIGHT, MIN_WIDTH * window_scale)
+
+        if app.settings.user_config.get("remember_window_size"):
+            window_width = app.settings.user_config.get("window_width")
+            window_height = app.settings.user_config.get("window_height")
+            if window_width and window_height:
+                page.window.width = int(window_width)
+                page.window.height = int(window_height)
             else:
                 screen = get_monitors()[0]
-                page.window.width = int(screen.width * WINDOW_SCALE)
-                page.window.height = int(screen.height * WINDOW_SCALE)
+                page.window.width = int(screen.width * window_scale)
+                page.window.height = int(screen.height * window_scale)
+        else:
+            screen = get_monitors()[0]
+            page.window.width = int(screen.width * window_scale)
+            page.window.height = int(screen.height * window_scale)
 
-            page.update()
-            await page.window.center()
-            await page.window.to_front()
-            page.window.visible = True
-            page.update()
-        except IndexError:
-            logger.warning("No monitors detected, using default window size.")
+        page.update()
+        await page.window.center()
+        await page.window.to_front()
+        page.window.visible = True
+        page.update()
+    except IndexError:
+        logger.warning("No monitors detected, using default window size.")
 
 
 def get_route_handler() -> dict[str, str]:
@@ -120,15 +133,13 @@ def handle_page_resize(page: ft.Page, app: App) -> Callable:
 
 async def main(page: ft.Page) -> None:
     page.title = "StreamCap"
-    page.window.min_width = MIN_WIDTH
-    page.window.min_height = MIN_WIDTH * WINDOW_SCALE
 
     _services = BackendServices.get()
     app = App(page, services=_services)
     page.data = app
     app.is_web_mode = page.web
     app.is_mobile = False
-    await setup_window(page, app)
+    await setup_desktop_window(page, app)
 
     if not page.web:
         try:
