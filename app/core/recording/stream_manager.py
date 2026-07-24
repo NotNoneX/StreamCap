@@ -315,6 +315,7 @@ class LiveStreamRecorder:
                 segment_time=self.segment_time,
                 full_path=save_path,
                 headers=self.get_headers_params(record_url, self.platform_key),
+                platform_key=self.platform_key,
             )
             ffmpeg_command = ffmpeg_builder.build_command()
             self.services.run_coro(
